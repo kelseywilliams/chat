@@ -1,0 +1,23 @@
+services:
+  chat:
+    container_name: chat
+    build: .
+    ports:
+      - "3029:3029"
+    secrets:
+      - jwt_public
+      - redis_secret
+    networks:
+      - site
+    restart: unless-stopped
+
+secrets:
+  jwt_public:
+    file: ./secrets/jwt_public.txt
+  redis_secret:
+    file: ./secrets/redis_secret.txt
+
+networks:
+  site:
+    external: true
+    name: site
