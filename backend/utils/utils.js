@@ -3,6 +3,7 @@ export function sanatizeRoom(input) {
   const cleanInput = input.trim();
   if (cleanInput.length < 1 || cleanInput.length > 64) return null;
   if (!/^[a-zA-Z0-9:_-]+$/.test(cleanInput)) return null;
+  return cleanInput;
 }
 
 export function sanatizeContent(input){

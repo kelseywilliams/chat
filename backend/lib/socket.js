@@ -10,19 +10,18 @@ import { corsOptions } from "../utils/corsOptions.js";
 const app = express();
 const server = http.createServer(app);
 
-const io = new Server(server, { cors: corsOptions });
+const io = new Server(server, {cors: corsOptions},);
 
 io.use(socketAuth);
 
 io.on("connection", (socket) => {
-    const username = socket.user.username;
-
-    socket.emit("user", socket.user);
+    const username = socket?.user.username ?? "unknown";
+    logger.info(`${username} connected.`)
+    socket.emit("user", username);
     roomManager(socket);
     chatManager(socket);
-
     socket.on("disconnect", () => {
-        logger.info("A user disconnected", username);
+        logger.info(`${username} disconnected.`);
     })
 })
 

@@ -1,7 +1,9 @@
 import { sanatizeRoom } from "../utils/utils.js";
+import secure from "./secure.js"
 
 export function roomManager(socket){
     socket.on("joinRoom", ({ room }, ack) => {
+    secure(socket);
     const name = sanatizeRoom(room);
     if (!name) {
         return ack?.(
@@ -14,6 +16,7 @@ export function roomManager(socket){
 
     socket.join(name);
     socket.data.room = name; // track current room if you want
+    console.log(socket.data.room);
     return ack?.(
         { 
             ok: true, 
@@ -23,6 +26,7 @@ export function roomManager(socket){
   });
 
   socket.on("leaveRoom", ({ room }, ack) => {
+    secure(socket);
     const name = sanatizeRoom(room);
     if (!name) return ack?.(
         { 
