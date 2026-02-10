@@ -3,8 +3,9 @@ const { Worker } = pkg; // QueueScheduler removed
 import axios from "axios";
 import { getBullConnection } from "../utils/bullmqConnect.js";
 import logger from "../utils/logger.js";
-import { INSERT_QUEUE } from "../config/index.js";
+import { INSERT_QUEUE, PROTOCOL, API_DOMAIN } from "../config/index.js";
 
+const API = `${PROTOCOL}://${API_DOMAIN}`;
 export default async function startMessageInsertWorker(io) {
   if (!io) throw new Error("io is required");
   
@@ -22,8 +23,7 @@ export default async function startMessageInsertWorker(io) {
       }
 
       const chat = await axios.post(
-        `https://api.kelseywilliams.co/chat/new`,
-        // `http://localhost:3028/chat/new`,
+        `${API}/chat/new`,
         { ulid, room, username, content },
         {
           headers: {

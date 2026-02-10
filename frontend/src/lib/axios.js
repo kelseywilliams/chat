@@ -1,8 +1,10 @@
-import axios from "axios";
+// Maybe use this axios instance in the future.
 
-export const axiosInstance = axios.create({
-  //baseURL: import.meta.env.MODE === "development" ? "http://localhost:3029/api" : "/api",
-  baseURL: "https://api.kelseywilliams.co/chat",
-//   baseURL: "https://localhost:3028/api/chat",
-  withCredentials: true,
-});
+// import axios from "axios";
+
+// const path = "https://localhost/api/chat"
+
+// export const axiosInstance = axios.create({
+//   baseURL: path,
+//   withCredentials: true,
+// });

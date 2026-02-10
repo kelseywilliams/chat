@@ -2,17 +2,17 @@ import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSessionStore } from '../store/useSessionStore.js'
 
-function emitJoinRoom(socket, roomName, { timeoutMs= 2500 } = {}) {
-    return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => {
-            resolve({ ok: true, ack: null, timedOut: true });
-        }, timeoutMs);
+function emitJoinRoom(socket, roomName, { timeoutMs = 2500 } = {}) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      resolve({ ok: false, ack: null, timedOut: true });
+    }, timeoutMs);
 
-        socket.emit("joinRooms", roomName, (ack) => {
-            clearTimeout(timeOut);
-            resolve({ ok: true, ack, timeOut: false });
-        });
+    socket.emit("joinRoom", { room: roomName }, (ack) => {
+      clearTimeout(timer);
+      resolve({ ok: true, ack, timedOut: false });
     });
+  });
 }
 
 export function useJoinRoom() {
@@ -39,7 +39,7 @@ export function useJoinRoom() {
             setIsJoining(true);
             try {
                 await emitJoinRoom(socket, roomName);
-                navigate(`/chat?room=${encodeURIComponent(rooName)}`);
+                navigate(`/chat?room=${encodeURIComponent(roomName)}`);
                 return true;
             } catch {
                 setError("Failed to join room.");
