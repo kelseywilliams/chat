@@ -7,7 +7,7 @@ services:
     secrets:
       - redis_secret
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
     networks:
       - site
     restart: unless-stopped

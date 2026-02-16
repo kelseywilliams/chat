@@ -17,11 +17,18 @@ app.disable("x-powered-by"); // Reduce fingerprinting
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-app.get(/^(?!\/api)(?!\/socket\.io)(?!.*\.).*$/, (_, res,) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+const distDir = path.join(__dirname, "../frontend/dist");
+
+// Serve built files under /chat
+app.use("/chat", express.static(distDir, { index: false }));
+
+// SPA fallback under /chat (must be AFTER static)
+app.get(/^\/chat(\/(?!assets\/).*)?$/, (_, res) => {
+  res.sendFile(path.join(distDir, "index.html"));
 });
+
+
 
 server.listen(PORT, () => {
     startMessageInsertWorker(io);

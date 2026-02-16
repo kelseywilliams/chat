@@ -24,7 +24,7 @@ export default function RoomView({ roomName, user, socket }) {
         setError(null);
 
         const response = await axios.post(
-          `/api/chat/read`,
+          `https://api.kelseywilliams.co/chat/read`,
           { room: roomName, last_seen_id: null },
           { withCredentials: true }
         );
@@ -92,7 +92,7 @@ export default function RoomView({ roomName, user, socket }) {
           const oldestId = messages[0].id;
 
           const response = await axios.post(
-            `/api/chat/read`,
+            `https://api.kelseywilliams.co/chat/read`,
             { room: roomName, last_seen_id: -oldestId },
             { withCredentials: true }
           );
