@@ -7,13 +7,13 @@ const path = `${PROTOCOL}://${API_DOMAIN}/auth/user`
 export async function socketAuth(socket, next) {
   const cookieHeader = socket.request.headers.cookie;
   if (!cookieHeader) return next(new Error("Unauthorized"));
-
   try {
     const res = await axios.get(path, {
       headers: { Cookie: cookieHeader },
       timeout: 2000,
       validateStatus: () => true,
     });
+
     if (res.status == 200) {
         socket.user = res.data;
     }

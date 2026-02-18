@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { PROTOCOL, API_DOMAIN } from "../config/index.js";
 import { useNavigate } from "react-router";
 import axios from "axios";
 
@@ -24,7 +25,7 @@ export default function RoomView({ roomName, user, socket }) {
         setError(null);
 
         const response = await axios.post(
-          `/api/chat/read`,
+          `${PROTOCOL}://${API_DOMAIN}/chat/read`,
           { room: roomName, last_seen_id: null },
           { withCredentials: true }
         );
@@ -92,7 +93,7 @@ export default function RoomView({ roomName, user, socket }) {
           const oldestId = messages[0].id;
 
           const response = await axios.post(
-            `/api/chat/read`,
+            `${PROTOCOL}://${DOMAIN}/chat/read`,
             { room: roomName, last_seen_id: -oldestId },
             { withCredentials: true }
           );
