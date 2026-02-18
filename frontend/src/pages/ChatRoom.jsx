@@ -21,7 +21,6 @@ export default function ChatRoom() {
 
     // Login doesn't work
     useEffect(() => {
-        console.log(authLost);
         if (authLost) {
             window.location.href = "/login";
         }
