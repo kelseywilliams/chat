@@ -2,11 +2,9 @@ import { messageInsertQueue } from "../utils/messageQueue.js";
 import logger from "../utils/logger.js";
 import { sanatizeContent, sanatizeRoom } from "../utils/utils.js";
 import { ulid } from "ulid";
-import secure from "./secure.js";
 
 export function chatManager(socket){
     socket.on("send", async ({ room, content }, ack) => {
-        secure(socket);
         const cookie = socket.request.headers.cookie;
         if (!cookie) {
             logger.error("Cookie not included in socket request.");

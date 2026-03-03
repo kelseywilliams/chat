@@ -16,6 +16,8 @@ export async function socketAuth(socket, next) {
 
     if (res.status == 200) {
         socket.user = res.data;
+    } else if (res.status == 401){
+        return next(Error("Unauthorized."));
     }
 
     return next();

@@ -13,7 +13,8 @@ export const useSessionStore = create((set, get) => ({
         const socket = io({ path: "/chat/socket.io", withCredentials: true });
         socket.on("user", (user) => set({ user }));
         socket.on("disconnect", () => set({ socket: null }));
-        socket.on("unauthorized", () => {
+        socket.on("connect_error", () => {
+            console.log("Unauthorized reached!");
             set({ socket: null, user: null, authLost: true });
             socket.disconnect();
         });
