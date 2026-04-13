@@ -159,7 +159,10 @@ export default function RoomView({ roomName, user, socket }) {
         });
     }
 
-    const handleLeave = () => socket.emit('leaveRoom', { room: roomName }, () => navigate('/chat'))
+    const handleLeave = () => socket.emit('leaveRoom', { room: roomName }, () => {
+        sessionStorage.removeItem("room");
+        navigate('/chat')
+    });
 
     const formatTime = (ts) => {
         if (!ts) return null;

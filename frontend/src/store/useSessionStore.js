@@ -12,6 +12,7 @@ export const useSessionStore = create((set, get) => ({
     room: null,
     roomCount: 0,
     userCount: 0,
+    activeRooms: 0,
     setAuthLost: (authLost) => set({ authLost }),
     setUser: (user) => set({ user }),
     setRoom: (room) => {
@@ -21,15 +22,17 @@ export const useSessionStore = create((set, get) => ({
     shouldRefetch: false,
     setShouldRefetch: (v) => set({ shouldRefetch: v }),
 
+
     connectSocket: () => {
         if (get().socket) return;
         const socket = io({ path: "/chat/socket.io", withCredentials: true });
         socket.on("user", (user) => set({ user: user }));
         socket.on("room_count", (count) => set({ roomCount: count }));
         socket.on("user_count", (count) => set({ userCount: count }));
+        socket.on("total_rooms", (total) => set({ activeRooms: total }));
         // upon connection, set all disconnect and error flags to false
         socket.on("connect", () => {
-            const room = get().room || sessionStorage.getItem("room");
+            const room = sessionStorage.getItem("room");
             if (room) {
                 set({ room }); // restore to store if it came from sessionStorage
                 socket.emit("leaveRoom", { room })
