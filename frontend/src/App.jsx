@@ -3,7 +3,7 @@ import ChatRoom from "./pages/ChatRoom"
 
 function App() {
     return (
-        <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hiden">
+        <div>
             <Routes>
                 <Route path="/lobby" element={<ChatRoom />} />
                 <Route path="/chat" element={<ChatRoom />} />

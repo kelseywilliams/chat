@@ -6,8 +6,6 @@ services:
       - "3029:3029"
     secrets:
       - redis_secret
-    environment:
-      NODE_ENV: development
     networks:
       - site
     restart: unless-stopped

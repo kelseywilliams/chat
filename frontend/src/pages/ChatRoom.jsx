@@ -17,9 +17,15 @@ export default function ChatRoom() {
     const socket = useSessionStore(s => s.socket);
     const user = useSessionStore(s => s.user);
     const authLost = useSessionStore(s => s.authLost);
+    const disconnect = useSessionStore(s => s.disconnect);
+    const disconnectReason = useSessionStore(s => s.disconnectReason);
+    const connect_error = useSessionStore(s => s.connect_error);
+    const setRoom = useSessionStore(s => s.setRoom);
 
+    useEffect(() => {
+        if (roomName) setRoom(roomName);
+    }, [roomName]);
 
-    // Login doesn't work
     useEffect(() => {
         if (authLost) {
             window.location.href = "/login";
@@ -28,7 +34,9 @@ export default function ChatRoom() {
 
     if (!roomName) return <RoomLobby />;
 
-    if (!socket) return <div>Connecting…</div>;
+    if (disconnect) return <div>Disconnected! {disconnectReason}.  Reconnecting...</div>;
+
+    if (connect_error) return <div>Connection error!</div>
 
     return <RoomView roomName={roomName} socket={socket} user={user} />;
 }

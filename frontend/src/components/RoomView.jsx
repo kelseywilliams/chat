@@ -1,239 +1,160 @@
-import { useState, useEffect, useRef } from "react";
-import { PROTOCOL, API_DOMAIN } from "../config/index.js";
-import { useNavigate } from "react-router";
-import axios from "axios";
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router'
+import axios from 'axios'
+import { PROTOCOL, API_DOMAIN } from '../config/index.js'
+import Navbar from './NavBar.jsx'
+import { useSessionStore } from '../store/useSessionStore.js'
 
 export default function RoomView({ roomName, user, socket }) {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
-  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+    const roomCount = useSessionStore((state) => state.roomCount);
+    const [message, setMessage] = useState('')
+    const [messages, setMessages] = useState([])
+    const [error, setError] = useState(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [isLoadingOlder, setIsLoadingOlder] = useState(false)
+    const [hasMoreMessages, setHasMoreMessages] = useState(true)
 
-  const chatContainerRef = useRef(null);
-  const navigate = useNavigate();
-  const previousScrollHeight = useRef(0);
-  const isAtBottomRef = useRef(true);
-  const didInitialScrollRef = useRef(false); // NEW
+    const containerRef = useRef(null)
+    const navigate = useNavigate()
+    const prevScrollHeight = useRef(0)
+    const isAtBottom = useRef(true)
+    const didInitialScroll = useRef(false)
 
-  // Load initial messages
-  useEffect(() => {
-    const loadMessages = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+    // Load initial messages
+    useEffect(() => {
+        if (!roomName) return
+        setIsLoading(true)
+        axios.post(`${PROTOCOL}://${API_DOMAIN}/chat/read`, { room: roomName, last_seen_id: null }, { withCredentials: true })
+            .then((res) => {
+                const chats = res.data?.chats
+                setMessages(Array.isArray(chats) ? chats : [])
+                setHasMoreMessages(chats?.length === 100)
+            })
+            .catch(() => setError('Failed to load messages'))
+            .finally(() => setIsLoading(false))
+    }, [roomName])
 
-        const response = await axios.post(
-          `${PROTOCOL}://${API_DOMAIN}/chat/read`,
-          { room: roomName, last_seen_id: null },
-          { withCredentials: true }
-        );
+    // Scroll to bottom on initial load
+    useEffect(() => {
+        if (isLoading || didInitialScroll.current) return
+        const el = containerRef.current
+        if (!el) return
+        el.scrollTop = el.scrollHeight
+        didInitialScroll.current = true
+    }, [isLoading, messages.length])
 
-        const chats = response.data?.chats;
-        if (Array.isArray(chats)) {
-          setMessages(chats);
-          setHasMoreMessages(chats.length === 100);
-        } else {
-          setMessages([]);
-          setError("Unexpected response format");
+    // Follow bottom on new messages
+    useEffect(() => {
+        if (isLoading || isLoadingOlder || !isAtBottom.current) return
+        const el = containerRef.current
+        if (el) el.scrollTop = el.scrollHeight
+    }, [messages, isLoading, isLoadingOlder])
+
+    // Scroll handler — track bottom, load older at top
+    useEffect(() => {
+        const el = containerRef.current
+        if (!el) return
+
+        const onScroll = async () => {
+            isAtBottom.current = el.scrollTop + el.clientHeight > el.scrollHeight - 50
+
+            if (el.scrollTop < 50 && !isLoadingOlder && hasMoreMessages && messages.length) {
+                setIsLoadingOlder(true)
+                prevScrollHeight.current = el.scrollHeight
+                try {
+                    const res = await axios.post(
+                        `${PROTOCOL}://${API_DOMAIN}/chat/read`,
+                        { room: roomName, last_seen_id: -messages[0].id },
+                        { withCredentials: true }
+                    )
+                    const older = res.data?.chats
+                    if (Array.isArray(older) && older.length) {
+                        setMessages((prev) => [...older, ...prev])
+                        setHasMoreMessages(older.length === 100)
+                    } else {
+                        setHasMoreMessages(false)
+                    }
+                } finally {
+                    setIsLoadingOlder(false)
+                }
+            }
         }
-      } catch (err) {
-        setMessages([]);
-        setError("Failed to load messages");
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    if (roomName) loadMessages();
-  }, [roomName]);
+        el.addEventListener('scroll', onScroll)
+        return () => el.removeEventListener('scroll', onScroll)
+    }, [messages, isLoadingOlder, hasMoreMessages, roomName])
 
-  // Scroll to bottom once after initial load finishes (guaranteed)
-  useEffect(() => {
-    if (isLoading) return;
-    if (didInitialScrollRef.current) return;
-
-    const el = chatContainerRef.current;
-    if (!el) return;
-
-    el.scrollTop = el.scrollHeight;
-    didInitialScrollRef.current = true;
-  }, [isLoading, messages.length]);
-
-  // Auto-follow newest messages (BOTTOM) when user is already near bottom
-  useEffect(() => {
-    if (isLoading) return;
-
-    const el = chatContainerRef.current;
-    if (!el) return;
-
-    if (!isLoadingOlder && isAtBottomRef.current) {
-      el.scrollTop = el.scrollHeight; // no smooth; deterministic
-    }
-  }, [messages, isLoadingOlder, isLoading]);
-
-  // Scroll handler (load older when near TOP)
-  useEffect(() => {
-    const el = chatContainerRef.current;
-    if (!el) return;
-
-    const onScroll = async () => {
-      const nearTop = el.scrollTop < 50;
-      const nearBottom =
-        el.scrollTop + el.clientHeight > el.scrollHeight - 50;
-
-      isAtBottomRef.current = nearBottom;
-
-      if (nearTop && !isLoadingOlder && hasMoreMessages && messages.length) {
-        setIsLoadingOlder(true);
-        previousScrollHeight.current = el.scrollHeight;
-
-        try {
-          const oldestId = messages[0].id;
-
-          const response = await axios.post(
-            `${PROTOCOL}://${DOMAIN}/chat/read`,
-            { room: roomName, last_seen_id: -oldestId },
-            { withCredentials: true }
-          );
-
-          const older = response.data?.chats;
-          if (Array.isArray(older) && older.length) {
-            setMessages((prev) => [...older, ...prev]);
-            setHasMoreMessages(older.length === 100);
-          } else {
-            setHasMoreMessages(false);
-          }
-        } finally {
-          setIsLoadingOlder(false);
+    // Preserve scroll position after prepend
+    useEffect(() => {
+        if (isLoadingOlder || !prevScrollHeight.current) return
+        const el = containerRef.current
+        if (el) {
+            el.scrollTop += el.scrollHeight - prevScrollHeight.current
+            prevScrollHeight.current = 0
         }
-      }
-    };
+    }, [isLoadingOlder])
 
-    el.addEventListener("scroll", onScroll);
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [messages, isLoadingOlder, hasMoreMessages, roomName]);
+    // Incoming socket messages
+    useEffect(() => {
+        if (!socket) return
+        const onNew = (msg) => setMessages((prev) => [...prev, msg])
+        socket.on('new', onNew)
+        return () => socket.off('new', onNew)
+    }, [socket])
 
-  // Preserve scroll position when older messages prepend
-  useEffect(() => {
-    if (!isLoadingOlder && previousScrollHeight.current) {
-      const el = chatContainerRef.current;
-      if (el) {
-        const delta = el.scrollHeight - previousScrollHeight.current;
-        el.scrollTop += delta;
-        previousScrollHeight.current = 0;
-      }
+    const handleSend = (e) => {
+        e.preventDefault()
+        if (!message.trim()) return
+        socket.emit('send', { room: roomName, content: message }, (ack) => {
+            if (!ack.ok) setError(ack.error)
+            else { setMessage(''); setError(null) }
+        })
     }
-  }, [isLoadingOlder]);
 
-  // Incoming socket messages → newest at bottom (append)
-  useEffect(() => {
-    if (!socket) return;
+    const handleLeave = () => socket.emit('leaveRoom', { room: roomName }, () => navigate('/chat'))
 
-    const onNew = (msg) => {
-      setMessages((prev) => [...prev, msg]);
-    };
+    return (
+        <div className="h-screen flex flex-col bg-base-100">
+            <Navbar />
 
-    socket.on("new", onNew);
-    return () => socket.off("new", onNew);
-  }, [socket]);
-
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!message.trim()) return;
-
-    socket.emit("send", { room: roomName, content: message }, (ack) => {
-      if (!ack.ok) setError(ack.error);
-      else {
-        setMessage("");
-        setError(null);
-      }
-    });
-  };
-
-  const handleLeave = () => {
-    socket.emit("leaveRoom", { room: roomName }, () => navigate("/chat"));
-  };
-
-  return (
-    <div className="card w-full max-w-2xl bg-base-100 shadow-xl border border-base-300">
-      <div className="card-body p-0">
-        <div className="flex items-center justify-between p-4 bg-base-200/50 rounded-t-2xl">
-          <div>
-            <h2 className="card-title text-primary"># {roomName}</h2>
-            <p className="text-xs opacity-70">
-              {user ? `Logged in as ${user}` : "Authenticating..."}
-            </p>
-          </div>
-          <button
-            className="btn btn-ghost btn-sm text-error"
-            onClick={handleLeave}
-          >
-            Leave Room
-          </button>
-        </div>
-
-        <div
-          ref={chatContainerRef}
-          className="h-[400px] overflow-y-auto p-4 space-y-4 bg-base-100/30"
-        >
-          {isLoadingOlder && (
-            <div className="flex justify-center py-2">
-              <span className="loading loading-spinner loading-sm" />
+            <div className="border-b border-base-300 px-6 py-1 text-sm font-medium flex items-center justify-between">
+                <span># {roomName}</span>
+                <button className="btn btn-sm btn-ghost text-error" onClick={handleLeave}>Leave</button>
             </div>
-          )}
 
-          {isLoading ? (
-            <div className="flex h-full items-center justify-center">
-              <span className="loading loading-spinner loading-lg" />
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex h-full items-center justify-center opacity-30 italic">
-              No messages yet. Start the conversation!
-            </div>
-          ) : (
-            messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`chat ${
-                  msg.username === user ? "chat-end" : "chat-start"
-                }`}
-              >
-                <div className="chat-header opacity-50 text-xs mb-1">
-                  {msg.username}
-                </div>
-                <div
-                  className={`chat-bubble ${
-                    msg.username === user
-                      ? "chat-bubble-primary"
-                      : "chat-bubble-secondary"
-                  }`}
-                >
-                  {msg.content}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+            <div ref={containerRef} className="flex-1 overflow-y-auto px-6 py-4 space-y-3" style={{ height: 'calc(100vh - 180px)' }}>
+                {isLoadingOlder && <div className="flex justify-center"><span className="loading loading-spinner loading-sm opacity-30" /></div>}
 
-        <div className="p-4 border-t border-base-200">
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <input
-              className={`input input-bordered flex-1 ${
-                error ? "input-error" : ""
-              }`}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message..."
-            />
-            <button className="btn btn-primary" disabled={!message.trim()}>
-              Send
-            </button>
-          </form>
-          {error && <p className="text-error text-xs mt-2">⚠️ {error}</p>}
+                {isLoading ? (
+                    <div className="flex h-full items-center justify-center"><span className="loading loading-spinner opacity-30" /></div>
+                ) : messages.length === 0 ? (
+                    <div className="flex h-full items-center justify-center text-sm opacity-30 italic">No messages yet.</div>
+                ) : messages.map((msg) => {
+                    const mine = msg.username === user
+                    return (
+                        <div key={msg.id} className={`flex flex-col gap-0.5 ${mine ? 'items-end' : 'items-start'}`}>
+                            <span className="text-xs opacity-40">{msg.username}</span>
+                            <div className={`px-3 py-2 rounded text-sm max-w-sm break-words ${mine ? 'bg-neutral text-neutral-content' : 'bg-base-200'}`}>
+                                {msg.content}
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+
+            <div className="border-t border-base-300 px-6 py-3">
+                <div className="text-xs opacity-40 mb-2">{roomCount} in room</div>
+                <form onSubmit={handleSend} className="flex gap-2">
+                    <input
+                        className="input input-bordered flex-1"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Message..."
+                    />
+                    <button className="btn btn-neutral" disabled={!message.trim()}>Send</button>
+                </form>
+                {error && <p className="text-error text-xs mt-2">{error}</p>}
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    )
 }

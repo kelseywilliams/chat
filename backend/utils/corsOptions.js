@@ -2,9 +2,6 @@ const allowedOrigins = [
     "https://api.kelseywilliams.co",
     "https://kelseywilliams.co",
     "https://www.kelseywilliams.co",
-    // "http://localhost:3028",
-    // "http://api:3028",
-    // "http://api",
     "http://localhost",
     "http://proxy:80"
 ]

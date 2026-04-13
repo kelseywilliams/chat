@@ -1,9 +1,8 @@
-import { messageInsertQueue } from "../utils/messageQueue.js";
 import logger from "../utils/logger.js";
 import { sanatizeContent, sanatizeRoom } from "../utils/utils.js";
 import { ulid } from "ulid";
 
-export function chatManager(socket){
+export function chatManager(socket, messageInsertQueue){
     socket.on("send", async ({ room, content }, ack) => {
         const cookie = socket.request.headers.cookie;
         if (!cookie) {

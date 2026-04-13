@@ -1,47 +1,54 @@
 import { sanatizeRoom } from "../utils/utils.js";
 import logger from "../utils/logger.js";
 
-export function roomManager(socket){
-    socket.on("joinRoom", ({ room }, ack) => {
-    const name = sanatizeRoom(room);
-    if (!name) {
+export async function roomManager(io, socket, client) {
+    socket.on("joinRoom", async ({ room }, ack) => {
+        const name = sanatizeRoom(room);
+        if (!name) {
+            return ack?.(
+                {
+                    ok: false,
+                    error: "Invalid room name"
+                }
+            );
+        }
+
+        socket.join(name);
+        // Collect the sockets connected to a room and the rooms the socket is
+        // connect to.
+        await client.sadd(`room:${name}`, socket.id);
+        await client.sadd(`room:${socket.id}`, name);
+        // Get the number of socket connections to the room
+        const roomSize = await client.scard(`room:${name}`);
+        io.to(name).emit("room_count", roomSize);
+        logger.info(`${socket.user.username} joined room ${name}`);
         return ack?.(
-            { 
-                ok: false, 
-                error: "Invalid room name"
-             }
-        );
-    } 
-
-    socket.join(name);
-    socket.data.room = name; // track current room if you want
-    logger.info(`${socket.user.username} joined ${socket.data.room}`);
-    return ack?.(
-        { 
-            ok: true, 
-            room: name 
-        }
-    );
-  });
-
-  socket.on("leaveRoom", ({ room }, ack) => {
-    const name = sanatizeRoom(room);
-    if (!name) return ack?.(
-        { 
-            ok: false,
-            error: "Invalid room name" 
-        }
-    );
-
-    socket.leave(name);
-    if (socket.data.room === name) {
-        socket.data.room = null;
-    }
-    return ack?.(
-        {
-             ok: true, 
-             room: name 
+            {
+                ok: true,
+                room: name
             }
         );
-  });
+    });
+
+    socket.on("leaveRoom", async ({ room }, ack) => {
+        const name = sanatizeRoom(room);
+        if (!name) return ack?.(
+            {
+                ok: false,
+                error: "Invalid room name"
+            }
+        );
+
+        socket.leave(name);
+        await client.srem(`room:${name}`, socket.id);
+        await client.srem(`room:${socket.id}`, name);
+        const roomSize = await client.scard(`room:${name}`);
+        io.to(name).emit("room_count", roomSize);
+        return ack?.(
+            {
+                ok: true,
+                room: name
+            }
+        );
+    });
 }
