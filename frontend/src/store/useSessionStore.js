@@ -6,18 +6,49 @@ export const useSessionStore = create((set, get) => ({
     user: null,
     socket: null,
     authLost: false,
+    disconnected: true,
+    connect_error: true,
+    disconnectReason: null,
+    room: null,
+    roomCount: 0,
+    userCount: 0,
+    setAuthLost: (authLost) => set({ authLost }),
     setUser: (user) => set({ user }),
+    setRoom: (room) => {
+        sessionStorage.setItem("room", room);
+        set({ room });
+    },
 
     connectSocket: () => {
         if (get().socket) return;
         const socket = io({ path: "/chat/socket.io", withCredentials: true });
-        socket.on("user", (user) => set({ user }));
-        socket.on("disconnect", () => set({ socket: null }));
+        socket.on("user", (user) => set({ user: user }));
+        socket.on("room_count", (count) => set({ roomCount: count }));
+        socket.on("user_count", (count) => set({ userCount: count }));
+        // upon connection, set all disconnect and error flags to false
+        socket.on("connect", () => {
+            const room = get().room || sessionStorage.getItem("room");
+            if (room) {
+                set({ room }); // restore to store if it came from sessionStorage
+                socket.emit("leaveRoom", { room })
+                socket.emit("joinRoom", { room });
+            }
+            set({ authLost: false, disconnected: false, disconnectReason: null, connect_error: false });
+        });
+        socket.on("disconnect", (reason) => {
+            set({ disconnected: true, disconnectReason: reason });
+            console.log(`Disconnected: ${reason}`);
+        });
+        // This will likely trigger on expired token 
         socket.on("connect_error", () => {
-            console.log("Unauthorized reached!");
-            set({ socket: null, user: null, authLost: true });
-            socket.disconnect();
+            set({ authLost: true, connect_error: true });
+            console.log("Connection error");
         });
         set({ socket });
+    },
+    disconnectSocket: () => {
+        if (!get().socket) return;
+        else socket.disconnect();
+        set({ socket: null, user: null, room: null });
     },
 }));

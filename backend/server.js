@@ -1,16 +1,22 @@
 import startMessageInsertWorker from "./workers/messageInsertWorker.js"
+import { connectRedis } from "./utils/redisClient.js";
 import logger from "./utils/logger.js";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser"
 import path from "path";
 import { fileURLToPath } from "url";
-import { io, app, server } from "./lib/socket.js";
+import { io, app, server, initMessageInsertQueue, initClient } from "./lib/socket.js";
 import { corsOptions } from "./utils/corsOptions.js";
 import { PORT } from "./config/index.js";
 
 const __filename = fileURLToPath(import.meta.url); // TODO WHAT IS THIS
 const __dirname = path.dirname(__filename);
+
+// Connect to redis.  Await the message insert queue which depends on redis.
+await connectRedis();
+await initMessageInsertQueue();
+await initClient();
 
 app.use(cors(corsOptions));
 app.disable("x-powered-by"); // Reduce fingerprinting

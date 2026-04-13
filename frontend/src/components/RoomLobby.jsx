@@ -1,72 +1,59 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useJoinRoom } from './useJoinRoom.js'
+import Navbar from './NavBar.jsx'
+import { useSessionStore } from '../store/useSessionStore.js'
 
-export default function RoomLobby(){
-    const PUBLIC_ROOMS = ["General", "Gaming", "Movies"];
-    const { joinRoom, error, isJoining, hasSocket } = useJoinRoom();
-    const [roomInput, setRoomInput] = useState("");
+const PUBLIC_ROOMS = ['General', 'Gaming', 'Movies']
 
-    const rooms = useMemo(() => PUBLIC_ROOMS, []);
+export default function RoomLobby() {
+    const userCount = useSessionStore((state) => state.userCount);
+    const { joinRoom, error, isJoining, hasSocket } = useJoinRoom()
+    const [roomInput, setRoomInput] = useState('')
 
-    const onSubmit = async(e) => {
-        e.preventDefault();
-        await joinRoom(roomInput);
-    };
+    const onSubmit = (e) => {
+        e.preventDefault()
+        joinRoom(roomInput)
+    }
 
     return (
-        <div className="card w-full max-w-xl bg-base-100 shadow-xl">
-            <div className="card-body gap-6">
-            <h1 className="card-title justify-center text-2xl font-bold">Join a room</h1>
+        <div className="h-screen flex flex-col">
+            <Navbar />
 
-            <form onSubmit={onSubmit} className="form-control gap-3">
-                <input
-                required
-                type="text"
-                placeholder="Enter a room name..."
-                className="input input-bordered w-full text-center"
-                value={roomInput}
-                onChange={(e) => setRoomInput(e.target.value)}
-                maxLength={64}
-                disabled={isJoining}
-                />
-
-                <button className="btn btn-primary" disabled={isJoining || !hasSocket}>
-                {isJoining ? <span className="loading loading-spinner" /> : "Join Room"}
-                </button>
-
-                {/* Cleaner logic gates using && */}
-                {error && (
-                <div className="alert alert-error py-2 text-sm">
-                    <span>{error}</span>
-                </div>
-                )}
-
-                {!hasSocket && (
-                <p className="text-center text-xs opacity-50 animate-pulse">
-                    Establishing connection...
-                </p>
-                )}
-            </form>
-
-            {rooms.length > 0 && (
-                <>
-                <div className="divider text-xs uppercase tracking-widest opacity-50">Public Rooms</div>
-                <div className="grid grid-cols-1 gap-2">
-                    {rooms.map((room) => (
-                    <button
-                        key={room}
-                        type="button"
-                        className="btn btn-outline btn-sm"
-                        onClick={() => joinRoom(room)}
+            <main className="max-w-lg mx-auto w-full px-6 py-12">
+                <h1 className="text-2xl font-bold mb-8">Chat</h1>
+                <div className="text-xs opacity-40 mb-2">{userCount} online</div>
+                <form onSubmit={onSubmit} className="flex flex-col gap-3 mb-10">
+                    <input
+                        required
+                        type="text"
+                        placeholder="Room name..."
+                        className="input input-bordered w-full"
+                        value={roomInput}
+                        onChange={(e) => setRoomInput(e.target.value)}
+                        maxLength={64}
                         disabled={isJoining}
-                    >
-                        {room}
+                    />
+                    <button className="btn btn-neutral" disabled={isJoining || !hasSocket}>
+                        {isJoining ? <span className="loading loading-spinner loading-sm" /> : 'Join Room'}
                     </button>
+                    {error && <p className="text-error text-sm">{error}</p>}
+                    {!hasSocket && <p className="text-xs opacity-50 animate-pulse">Connecting...</p>}
+                </form>
+
+                <p className="text-xs uppercase tracking-widest text-base-content/40 mb-3">Public Rooms</p>
+                <div className="border-t border-base-300">
+                    {PUBLIC_ROOMS.map((room) => (
+                        <button
+                            key={room}
+                            className="w-full text-left py-3 border-b border-base-300 hover:text-primary transition-colors disabled:opacity-40"
+                            onClick={() => joinRoom(room)}
+                            disabled={isJoining}
+                        >
+                            {room}
+                        </button>
                     ))}
                 </div>
-                </>
-            )}
-            </div>
+            </main>
         </div>
-    );
+    )
 }
