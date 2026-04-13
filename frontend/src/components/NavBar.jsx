@@ -26,29 +26,31 @@ export default function Navbar({ right }) {
     }
 
     return (
-        <header className="bg-neutral text-neutral-content flex px-6 py-2 items-center justify-between">
-            <div>
-                <a href="/" className="text-xl">kelseywilliams.co</a>
-                <span className="text-xl">/chat</span>
-            </div>
-
-            <div className="flex items-center gap-4">
+        <header className="bg-neutral text-neutral-content px-4 py-3">
+            <div className="flex items-center justify-between">
+                <div className="text-xl">
+                    <a href="/" className="font-medium">kelseywilliams.co</a>
+                    <span>/chat</span>
+                </div>
                 {right}
-                <ThemeToggle />
-                {authLost ? (
-                    <>
-                        <div className="btn btn-primary" onClick={navigate("/login")}>Login</div>
-                        <div className="btn btn-secondary" onClick={navigate("/signup")}>Signup</div>
-                    </>
-                ) : (
-                    <>
-                        <span>{user}</span>
-                        <button className="btn btn-primary" onClick={logout}>Logout</button>
-                    </>
-
-                )}
             </div>
-            {error && <p className="text-error text-xs mt-2">{error}</p>}
+            <div className="flex items-center justify-between mt-2">
+                <ThemeToggle />
+                <div className="flex items-center gap-3">
+                    {authLost ? (
+                        <>
+                            <div className="btn btn-primary btn-sm" onClick={() => navigate("/login")}>Login</div>
+                            <div className="btn btn-secondary btn-sm" onClick={() => navigate("/signup")}>Signup</div>
+                        </>
+                    ) : (
+                        <>
+                            <a href="https://kelseywilliams.co/profile" className="text-sm">{user}</a>
+                            <button className="btn btn-primary btn-sm" onClick={logout}>Logout</button>
+                        </>
+                    )}
+                </div>
+            </div>
+            {error && <p className="text-error text-xs mt-1">{error}</p>}
         </header>
     )
 }

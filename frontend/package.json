@@ -8,25 +8,26 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react-swc": "^3.5.0",
     "axios": "^1.13.2",
     "chat": "file:..",
+    "daisyui": "^5.5.14",
     "dotenv": "^17.2.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router": "^7.12.0",
     "socket.io-client": "^4.8.3",
     "tailwindcss": "^4.1.18",
+    "ulid": "^3.0.2",
+    "vite": "^5.2.0",
     "zustand": "^5.0.10"
   },
   "devDependencies": {
-    "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
-    "@vitejs/plugin-react-swc": "^3.5.0",
-    "daisyui": "^5.5.14",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.6",
-    "vite": "^5.2.0"
+    "eslint-plugin-react-refresh": "^0.4.6"
   }
 }

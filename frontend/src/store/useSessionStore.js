@@ -18,6 +18,8 @@ export const useSessionStore = create((set, get) => ({
         sessionStorage.setItem("room", room);
         set({ room });
     },
+    shouldRefetch: false,
+    setShouldRefetch: (v) => set({ shouldRefetch: v }),
 
     connectSocket: () => {
         if (get().socket) return;
@@ -32,6 +34,7 @@ export const useSessionStore = create((set, get) => ({
                 set({ room }); // restore to store if it came from sessionStorage
                 socket.emit("leaveRoom", { room })
                 socket.emit("joinRoom", { room });
+                set({ shouldRefetch: true });
             }
             set({ authLost: false, disconnected: false, disconnectReason: null, connect_error: false });
         });
