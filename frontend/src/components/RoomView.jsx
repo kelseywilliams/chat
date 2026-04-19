@@ -161,7 +161,7 @@ export default function RoomView({ roomName, user, socket }) {
 
     const handleLeave = () => socket.emit('leaveRoom', { room: roomName }, () => {
         sessionStorage.removeItem("room");
-        navigate('/chat')
+        navigate('/chat');
     });
 
     const formatTime = (ts) => {

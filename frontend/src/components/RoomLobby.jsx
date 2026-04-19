@@ -8,7 +8,7 @@ const randomHash = () => Math.random().toString(36).slice(2, 8).toUpperCase();
 export default function RoomLobby() {
     const userCount = useSessionStore((state) => state.userCount);
     const activeRooms = useSessionStore((s) => s.activeRooms);
-    const socket = useSessionStore((s) => s.socket); // ← add this
+    const socket = useSessionStore((s) => s.socket);
     const { joinRoom, error, isJoining, hasSocket } = useJoinRoom()
     const [roomInput, setRoomInput] = useState('')
     const publicRooms = useMemo(() => Array.from({ length: 4 }, randomHash), []);
