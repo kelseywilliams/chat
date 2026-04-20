@@ -1,9 +1,6 @@
 const allowedOrigins = [
-    // "https://api.kelseywilliams.co",
     "https://kelseywilliams.co",
-    // "https://www.kelseywilliams.co",
     "http://localhost",
-    // "http://proxy:80"
 ]
 
 const corsOptions = {
