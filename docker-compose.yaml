@@ -1,7 +1,7 @@
 services:
   chat:
     container_name: chat
-    build: .
+    image: ghcr.io/kelseywilliams/chat:workflow
     ports:
       - "3029:3029"
     secrets:
