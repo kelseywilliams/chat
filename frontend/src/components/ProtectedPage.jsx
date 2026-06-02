@@ -16,8 +16,6 @@ const ProtectedPage = () => {
 
     if (isVerifying || hasAuthFailed) {
         return (
-            /* 🌟 Added a subtle background overlay color so you aren't staring at a broken UI 
-               while authorization states are being verified or rejected */
             <div className="fixed inset-0 flex items-center justify-center bg-neutral-950/40 backdrop-blur-sm z-50">
                 <div role="status">
                     <svg aria-hidden="true" className="w-8 h-8 text-neutral-400 animate-spin fill-brand" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
