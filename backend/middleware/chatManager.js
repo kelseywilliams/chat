@@ -3,7 +3,7 @@ import { sanatizeContent, sanatizeRoom } from "../utils/utils.js";
 import { ulid } from "ulid";
 
 export function chatManager(socket, messageInsertQueue){
-    socket.on("send", async ({ room, content }, ack) => {
+    socket.on("send", async ({ ulid: clientUlid, room, content }, ack) => {
         const cookie = socket.request.headers.cookie;
         if (!cookie) {
             logger.error("Cookie not included in socket request.");
@@ -36,12 +36,11 @@ export function chatManager(socket, messageInsertQueue){
                 { ok: false, error: "User not authenticated."}
             )
         }
-        const id = ulid();
 
         try {
             await messageInsertQueue.add("insertMessage", {
                 cookie,
-                ulid: id,
+                ulid: clientUlid,
                 room: cleanRoom,
                 username,
                 content: cleanContent 

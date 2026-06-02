@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const THEMES = ['light', 'dark', 'cupcake', 'dracula', 'corporate', 'nord', 'cyberpunk', 'valentine']
-
+const THEMES = ['light', 'dark', 'cupcake', 'bumblebee', 'emerald', 'corporate', 'synthwave', 'retro', 'cyberpunk', 'valentine', 'halloween', 'garden', 'forest', 'aqua', 'lofi', 'pastel', 'fantasy', 'wireframe', 'black', 'luxury', 'dracula', 'cmyk', 'autumn','business', 'acid', 'lemonade', 'night', 'coffee', 'winter', 'dim', 'nord', 'sunset']
 export default function ThemeToggle() {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'light'
@@ -14,9 +13,9 @@ export default function ThemeToggle() {
 
   return (
     <select
-      className="select select-sm bg-transparent border-neutral-content/30 text-neutral-content focus:outline-none"
-      value={theme}
-      onChange={(e) => setTheme(e.target.value)}
+        className="select select-xs md:select-sm bg-transparent border-neutral-content/30 text-neutral-content focus:outline-none max-w-24 md:max-w-32"
+        value={theme}
+        onChange={(e) => setTheme(e.target.value)}
     >
       {THEMES.map((t) => (
         <option key={t} value={t} className="text-base-content bg-base-100">

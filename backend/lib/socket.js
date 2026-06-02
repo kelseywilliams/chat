@@ -12,7 +12,7 @@ import { getRedisClient } from "../utils/redisClient.js";
 const app = express();
 const server = http.createServer(app);
 
-const io = new Server(server, {cors: corsOptions},);
+const io = new Server(server, { cors: corsOptions },);
 
 io.use(socketAuth);
 
@@ -21,6 +21,8 @@ let messageInsertQueue = null;
 let client = null;
 
 let online = null;
+
+let active = null;
 
 io.on("connection", async (socket) => {
     // On connection event, get username and add sock id to online redis set
@@ -31,17 +33,32 @@ io.on("connection", async (socket) => {
     // Emit the username to the client
     socket.emit("user", username);
 
+    // Get the number of total unique online users and active rooms.  Emit to client
     online = await client.scard("online");
+    active = await client.scard(`room:rooms`);
     io.emit("user_count", online);
+    io.emit("total_rooms", active);
+
     await roomManager(io, socket, client);
     chatManager(socket, messageInsertQueue);
     socket.on("disconnect", async () => {
+        // Remove the user from online users
         await client.srem("online", username);
+        // Get all rooms the user was connected to
         const rooms = await client.smembers(`room:${socket.id}`);
         console.log(`rooms=${rooms} socket.id=${socket.id}`);
-        for(const room of rooms){
+        // For every room remove the user
+        for (const room of rooms) {
             await client.srem(`room:${room}`, socket.id);
+            // After removing the user, get the number of remaining connections to room
             const online = await client.scard(`room:${room}`);
+            // If there is nobody left in the room, delete it from active rooms
+            // and broadcast
+            if (online == 0) {
+                await client.srem(`room:rooms`, room);
+                active = await client.scard(`room:rooms`);
+                io.emit("total_rooms", active);
+            }
             io.to(room).emit("room_count", online);
         }
         await client.del(`room:${socket.id}`);
@@ -61,7 +78,7 @@ const initMessageInsertQueue = async () => {
     messageInsertQueue = await getMessageInsertQueue();
 }
 
-const initClient = async() => {
+const initClient = async () => {
     client = await getRedisClient();
 }
 
