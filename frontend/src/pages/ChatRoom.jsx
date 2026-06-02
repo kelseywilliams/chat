@@ -17,7 +17,7 @@ export default function ChatRoom() {
     const socket = useSessionStore(s => s.socket);
     const user = useSessionStore(s => s.user);
     const authLost = useSessionStore(s => s.authLost);
-    const disconnect = useSessionStore(s => s.disconnect);
+    const disconnected = useSessionStore(s => s.disconnected); // 🌟 FIX: Match state named 'disconnected'
     const disconnectReason = useSessionStore(s => s.disconnectReason);
     const connect_error = useSessionStore(s => s.connect_error);
     const setRoom = useSessionStore(s => s.setRoom);
@@ -32,11 +32,15 @@ export default function ChatRoom() {
         }
     }, [authLost]);
 
+    if (connect_error) {
+        return <div className="p-6 text-red-500 font-bold">Connection error! Gateway refused authentication.</div>;
+    }
+
+    if (disconnected && socket) {
+        return <div className="p-6 text-yellow-500 font-bold">Disconnected! {disconnectReason}. Reconnecting...</div>;
+    }
+
     if (!roomName) return <RoomLobby />;
-
-    if (disconnect) return <div>Disconnected! {disconnectReason}.  Reconnecting...</div>;
-
-    if (connect_error) return <div>Connection error!</div>
 
     return <RoomView roomName={roomName} socket={socket} user={user} />;
 }
